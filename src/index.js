@@ -23,7 +23,7 @@ db.init().then(() => {
 
 const gracefulShutdown = () => {
     db.teardown()
-        .catch(() => {})
+        .catch((err) => {console.log(err)})
         .then(() => process.exit());
 };
 
