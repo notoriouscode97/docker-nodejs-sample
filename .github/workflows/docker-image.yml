@@ -15,16 +15,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Extract Git tag
+      # Determine the Git tag or default to 'latest' for manual triggers
       - name: Get the Git tag
         id: git_tag
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          else
+            echo "tag=latest" >> $GITHUB_ENV
+          fi
 
       # Log in to GitHub Container Registry
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      # Build the Docker image with the tag from Git
+      # Build the Docker image with the appropriate tag
       - name: Build Docker image
         run: docker build . --file Dockerfile --tag ghcr.io/${{ github.repository }}/docker-node:${{ env.tag }}
 
