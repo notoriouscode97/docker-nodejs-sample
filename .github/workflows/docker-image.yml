@@ -2,6 +2,9 @@ name: Docker Image CI
 
 on:
   workflow_dispatch: # Allows manual triggering of the workflow
+  push:
+    tags:
+      - "v*.*.*" # Triggers on semantic version tags like v1.0.0
 
 jobs:
   build-and-push:
@@ -12,14 +15,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Extract Git tag
+      - name: Get the Git tag
+        id: git_tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
       # Log in to GitHub Container Registry
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      # Build the Docker image
+      # Build the Docker image with the tag from Git
       - name: Build Docker image
-        run: docker build . --file Dockerfile --tag ghcr.io/${{ github.repository }}/docker-node:latest
+        run: docker build . --file Dockerfile --tag ghcr.io/${{ github.repository }}/docker-node:${{ env.tag }}
 
       # Push the Docker image
       - name: Push Docker image
-        run: docker push ghcr.io/${{ github.repository }}/docker-node:latest
+        run: docker push ghcr.io/${{ github.repository }}/docker-node:${{ env.tag }}
